@@ -2,6 +2,7 @@ package ru.lab.game.world.collision;
 
 
 import ru.lab.game.entity.Entity;
+import ru.lab.game.world.collision.rules.CollisionRule;
 import ru.lab.game.world.collision.rules.GrassCreatureRule;
 import ru.lab.game.world.collision.rules.RockHerbivoreRule;
 import ru.lab.game.world.collision.rules.UnoRule;

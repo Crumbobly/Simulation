@@ -2,8 +2,11 @@ package ru.lab.app.ui.gameMap.layout;
 
 import ru.lab.app.state.AppState;
 import ru.lab.app.state.HeatMapType;
+import ru.lab.app.state.StateType;
 import ru.lab.app.visual.Camera;
+import ru.lab.app.visual.models.HeatMapModel;
 import ru.lab.config.Config;
+import ru.lab.game.GameContext;
 import ru.lab.game.world.CellDensity;
 import ru.lab.game.world.WorldMap;
 
@@ -13,85 +16,38 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.util.List;
 
-public class HeatMapLayout extends JPanel {
+public class HeatMapLayout extends MapLayout {
 
     private final AppState appState;
+    private final GameContext gameContext;
 
-    public HeatMapLayout(final AppState appState) {
+    public HeatMapLayout(AppState appState, GameContext gameContext) {
         this.appState = appState;
+        this.gameContext = gameContext;
 
-        setOpaque(false);
-        setBackground(new Color(0, 0, 0, 0));
-        setAlignmentX(0f);
-        setAlignmentY(0f);
+        appState.addChangeListener(change -> {
+            if (change == StateType.HEATMAP) {
+                repaint();
+            }
+        });
     }
 
     @Override
     protected void paintComponent(Graphics g) {
-//        System.out.println("HeatmapLayout paint component");
         super.paintComponent(g);
         final Graphics2D g2d = (Graphics2D) g;
 
-        final WorldMap worldMap = appState.getGameContext().getWorldMap();
-        final HeatMapType heatMapType = appState.getCurrentHeatMapType();
-        final Camera camera = appState.getCamera();
-        final int viewMinX = (int) camera.screenToWorldX(0);
-        final int viewMinY = (int) camera.screenToWorldY(0);
-        final int viewMaxX = (int) camera.screenToWorldX(Config.MAP_WIDTH);
-        final int viewMaxY = (int) camera.screenToWorldY(Config.MAP_HEIGHT);
-        final int totalEntityCount = worldMap.getEntityCount();
-
-        if (heatMapType == HeatMapType.DISABLED) {
+        if (appState.getCurrentHeatMapType() == HeatMapType.DISABLED) {
             return;
         }
 
-        final List<CellDensity> densities = worldMap.getCellDensities(
-                viewMinX, viewMinY, viewMaxX, viewMaxY, heatMapType == HeatMapType.HEAT_ALIVE
-        );
-
-        render(g2d, camera, densities, totalEntityCount);
-
-    }
-
-    public void render(Graphics2D g2d, Camera camera, List<CellDensity> densities, int totalEntityCount) {
-        int cellOffsetX = (int) camera.getOffsetX() % Config.SPATIAL_CELL_SIZE;
-        int cellOffsetY = (int) camera.getOffsetY() % Config.SPATIAL_CELL_SIZE;
-
-        for (CellDensity density : densities) {
-            int cellLT = density.worldX() - cellOffsetX;
-            int cellRT = density.worldY() - cellOffsetY;
-
-            int screenX1 = camera.worldToScreenX(cellLT) ;
-            int screenX2 = camera.worldToScreenX(cellLT + Config.SPATIAL_CELL_SIZE);
-            int screenY1 = camera.worldToScreenY(cellRT) ;
-            int screenY2 = camera.worldToScreenY(cellRT + Config.SPATIAL_CELL_SIZE);
-            int count = density.count();
-
-            g2d.setColor(heatColor(totalEntityCount, count));
-            g2d.fillRect(screenX1, screenY1, screenX2 - screenX1, screenY2 - screenY1);
-
+        final HeatMapModel model = HeatMapModel.build(appState, gameContext);
+        for (HeatMapModel.CellModel cell: model.getCells()) {
+            g2d.setColor(cell.color());
+            g2d.fillRect(cell.x(), cell.y(), cell.width(), cell.height());
         }
+
     }
 
-    public static Color heatColor(int totalEntityCount, int countCell) {
-        float ratioNorm = getCellEntityRatioNorm(totalEntityCount, countCell);
-        int rgb = Color.HSBtoRGB((1f - ratioNorm) * 2f/3f, 1f, 1f);
-        return new Color((rgb & 0xFFFFFF) | 0x99000000, true);
-    }
-
-    public static float getCellEntityRatioNorm(int totalEntityCount, int countCell) {
-
-        final float maxRatio = 5.0F;
-        final int totalCells = (Config.WORLD_WIDTH / Config.SPATIAL_CELL_SIZE) *
-                (Config.WORLD_HEIGHT / Config.SPATIAL_CELL_SIZE);
-
-        final float expected =  (float) totalEntityCount / totalCells;
-        // > 1 если в ячейке больше мат. ожидания
-        // < 1 если меньше
-        float ratio = countCell / expected;
-
-        ratio = Math.min(maxRatio, ratio);
-        return ratio / maxRatio;
-    }
 
 }

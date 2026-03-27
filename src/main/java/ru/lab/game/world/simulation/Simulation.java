@@ -41,6 +41,9 @@ public class Simulation {
             List<WorldAction> actions = new ArrayList<>(entities.size());
 
             for (Entity entity : entities) {
+                if (removed.contains(entity)) {
+                    continue;
+                }
 
                 PositionComponent pos = worldMap.getPosition(entity);
                 if (pos == null) continue;
@@ -55,8 +58,6 @@ public class Simulation {
             removed.clear();
 
         } catch (Exception e) {
-            // 🔥 Ловим ВСЕ исключения и печатаем стек
-            System.err.println("❌ ERROR in nextTurn():");
             e.printStackTrace();
         }
     }
@@ -66,8 +67,6 @@ public class Simulation {
             case Predator p -> processPredator(p, pos);
             case Herbivore h-> processHerbivore(h, pos);
             case Grass g -> processGrass(g, pos);
-            case Tree t -> null;
-            case Rock r -> null;
             default -> null;
         };
     }
@@ -79,19 +78,24 @@ public class Simulation {
             PositionComponent preyPos = worldMap.getPosition(prey);
 
             if (preyPos != null) {
-                double dist = distance(pos, preyPos);
-                if (dist < 5) {
+                double dist = PositionComponent.distance(pos, preyPos);
+                if (dist <= 2) {
                     removed.add(prey);
                     return new CompositeAction(
                             new RemoveAction(prey),
                             new MoveAction(entity, preyPos)
                     );
                 }
-                return new MoveAction(entity, moveTowards(pos, preyPos));
+
+                final PositionComponent target = moveTowards(pos, preyPos);
+                return new MoveAction(entity, target);
+
             }
         }
 
-        return new MoveAction(entity, randomMove(pos));
+        final PositionComponent randomPose = randomMove(pos, 1);
+        return new MoveAction(entity, randomPose);
+
     }
 
 
@@ -101,59 +105,52 @@ public class Simulation {
             return null;
         }
 
-        Entity grass = worldMap.findNearest(entity, e -> e.getClass() == Grass.class);
+        Entity predator = worldMap.findNearest(entity, e -> e.getClass() == Predator.class);
+        if (predator != null) {
+            PositionComponent predPos = worldMap.getPosition(predator);
+            if (predPos != null) {
+                double dist = PositionComponent.distance(pos, predPos);
+                if (dist <= Config.SPATIAL_CELL_SIZE * 5) {
+                    return new MoveAction(entity, moveAway(pos, predPos));
+                }
+            }
+        }
 
+        Entity grass = worldMap.findNearest(entity, e -> e.getClass() == Grass.class);
         if (grass != null && !removed.contains(grass)) {
             PositionComponent grassPos = worldMap.getPosition(grass);
             if (grassPos != null) {
-                double dist = distance(pos, grassPos);
-                if (dist < 5) {
+                double dist = PositionComponent.distance(pos, grassPos);
+                if (dist <= 1) {
                     removed.add(grass);
                     return new CompositeAction(
                             new RemoveAction(grass),
-                            new MoveAction(entity, randomMove(pos))
+                            new MoveAction(entity, grassPos)
                     );
                 }
                 return new MoveAction(entity, moveTowards(pos, grassPos));
             }
         }
 
-        // 4. Нет травы — убегаем от хищников
-        Entity predator = worldMap.findNearest(entity, e -> e.getClass() == Predator.class);
-        if (predator != null) {
-            PositionComponent predPos = worldMap.getPosition(predator);
-            if (predPos != null) {
-                double dist = distance(pos, predPos);
-                if (dist < Config.SPATIAL_CELL_SIZE * 5) {
-                    return new MoveAction(entity, moveAway(pos, predPos));
-                }
-            }
-        }
-
-        // 5. Случайное движение
-        return new MoveAction(entity, randomMove(pos));
+        return new MoveAction(entity, randomMove(pos, 1));
     }
 
-    // ═══════════════════════════════════════════════════
-    // Логика травы (растёт)
-    // ═══════════════════════════════════════════════════
+
     private WorldAction processGrass(Entity entity, PositionComponent pos) {
-        // Шанс распространения 10% за ход
-        if (random.nextDouble() < 0.1) {
-            PositionComponent newPos = randomMove(pos);
-            // Проверяем, что там пусто
-//            if (worldMap.getPosition(newPos) == null) {
+
+        if (random.nextDouble() < 0.01) {
+            PositionComponent newPos = randomMove(pos, 10);
+
+            if (worldMap.canPlace(entity, newPos)) {
                 return new AddAction(new Grass(), newPos);
-//            }
+            }
         }
         return null;
     }
 
-    // todo a-star
-
-    private PositionComponent randomMove(PositionComponent pos) {
-        int dx = random.nextInt(10) - 5;
-        int dy = random.nextInt(10) - 5;
+    private PositionComponent randomMove(PositionComponent pos, int dist) {
+        int dx = random.nextInt(dist + 1) * random.nextInt(-1, 2);
+        int dy = random.nextInt(dist + 1) * random.nextInt(-1, 2);
         int newX = Math.max(0, Math.min(Config.WORLD_WIDTH - 1, pos.x() + dx));
         int newY = Math.max(0, Math.min(Config.WORLD_HEIGHT - 1, pos.y() + dy));
         return new PositionComponent(newX, newY);
@@ -177,8 +174,4 @@ public class Simulation {
         );
     }
 
-
-    public WorldMap getWorldMap() {
-        return worldMap;
-    }
 }

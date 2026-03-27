@@ -1,7 +1,6 @@
 package ru.lab.game.world.collision.rules;
 
 import ru.lab.game.entity.Entity;
-import ru.lab.game.world.collision.CollisionRule;
 
 import java.util.List;
 

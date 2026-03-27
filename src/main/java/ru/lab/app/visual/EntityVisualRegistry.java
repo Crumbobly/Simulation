@@ -25,11 +25,11 @@ public class EntityVisualRegistry {
         // singles
         register(
                 Set.of(Predator.class),
-                new EntityVisualConfig(new Color(235, 127, 106), "icons/wolf.png")
+                new EntityVisualConfig(new Color(255, 0, 0), "icons/wolf.png")
         );
         register(
                 Set.of(Herbivore.class),
-                new EntityVisualConfig(new Color(66, 58, 34), "icons/deer.png")
+                new EntityVisualConfig(new Color(0, 0, 255), "icons/deer.png")
         );
         register(
                 Set.of(Grass.class),
@@ -50,12 +50,12 @@ public class EntityVisualRegistry {
                 new EntityVisualConfig(new Color(66, 58, 34), "icons/deer_stone.png")
         );
         register(
-                Set.of(Predator.class, Grass.class), //todo
+                Set.of(Predator.class, Grass.class),
                 new EntityVisualConfig(new Color(235, 127, 106), "icons/grass.png")
         );
         register(
-                Set.of(Herbivore.class, Grass.class), //todo
-                new EntityVisualConfig(new Color(66, 58, 34), "icons/grass.png")
+                Set.of(Herbivore.class, Grass.class),
+                new EntityVisualConfig(new Color(0, 0, 255), "icons/grass.png")
         );
     }
 

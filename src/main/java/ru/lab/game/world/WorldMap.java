@@ -1,6 +1,5 @@
 package ru.lab.game.world;
 
-import ru.algo.spatial.type.ConcurrentSpatialGrid;
 import ru.algo.spatial.type.ValidatedSpatialGrid;
 import ru.lab.config.Config;
 import ru.lab.game.entity.Creature;
@@ -16,15 +15,20 @@ import ru.lab.game.world.simulation.action.WorldAction;
 import ru.algo.spatial.dto.PositionComponent;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
 
 public class WorldMap {
 
     private final ValidatedSpatialGrid<Entity> grid;
     private final CollisionService collisionService;
+
+    private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
     public WorldMap(ValidatedSpatialGrid<Entity> grid) {
         this.grid = grid;
@@ -33,16 +37,23 @@ public class WorldMap {
 
     public boolean canPlace(Entity entity, PositionComponent position) {
         List<Entity> existing = grid.getInPosition(position);
+        if (existing.contains(entity)) {
+            return true;
+        }
         return collisionService.canPlace(entity, existing);
     }
 
     public void applyActions(List<WorldAction> actions) {
         if (actions == null || actions.isEmpty()) return;
 
-        List<WorldAction> validActions = new ArrayList<>(actions);
-
-        for (WorldAction action : validActions) {
-            action.apply(this);
+        for (WorldAction action : actions) {
+            try {
+                action.apply(this);
+            } catch (IllegalArgumentException ignored) {
+            } catch (Exception e) {
+                System.err.println("Critical error applying action: " + action);
+                e.printStackTrace();
+            }
         }
 
     }
@@ -92,22 +103,6 @@ public class WorldMap {
 
     public Entity findNearest(Entity entity, Predicate<Entity> predicate) {
         return grid.findNearest(entity, predicate);
-    }
-
-    public boolean tryAdd(Entity entity, PositionComponent position) {
-        if (canPlace(entity, position)) {
-            add(entity, position);
-            return true;
-        }
-        return false;
-    }
-
-    public boolean tryRemove(Entity entity) {
-        if (grid.contains(entity)) {
-            remove(entity);
-            return true;
-        }
-        return false;
     }
 
     // Количество сущностей в ячейках в определенном "прямоугольнике"

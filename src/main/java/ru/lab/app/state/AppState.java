@@ -6,40 +6,27 @@ import ru.lab.game.GameContext;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class AppState {
 
+    private final Camera camera = new Camera(Config.MAP_WIDTH, Config.MAP_HEIGHT);
     private InteractionMode currentInteractionMode = InteractionMode.MOVE;
     private LODType currentLodType = LODType.PIXELS;
     private HeatMapType currentHeatMapType = HeatMapType.DISABLED;
     private SpawnType spawnType;
+    private boolean simActive = false;
 
-    private final List<Runnable> changeListeners = new ArrayList<>();
-    // todo убрать камеру?
-    private final Camera camera;
-    private final GameContext gameContext;
+    private final List<Consumer<StateType>> listeners = new ArrayList<>();
 
-    public AppState() {
-        this.gameContext = GameContext.createDefault();
-        this.camera = new Camera(Config.MAP_WIDTH, Config.MAP_HEIGHT);
+    public void addChangeListener(Consumer<StateType> listener) {
+        listeners.add(listener);
     }
 
-    public void addChangeListener(Runnable listener) {
-        changeListeners.add(listener);
-    }
-
-    private void notifyChanged() {
-        for (Runnable listener : changeListeners) {
-            listener.run();
+    private void notifyChanged(StateType change) {
+        for (var l : listeners) {
+            l.accept(change);
         }
-    }
-
-    public Camera getCamera() {
-        return camera;
-    }
-
-    public GameContext getGameContext() {
-        return gameContext;
     }
 
     public InteractionMode getCurrentInteractionMode() {
@@ -49,7 +36,7 @@ public class AppState {
     public void setCurrentInteractionMode(InteractionMode currentInteractionMode) {
         if (this.currentInteractionMode != currentInteractionMode) {
             this.currentInteractionMode = currentInteractionMode;
-            notifyChanged();
+            notifyChanged(StateType.INTERACTION);
         }
     }
 
@@ -60,7 +47,7 @@ public class AppState {
     public void setCurrentLodType(LODType currentLodType) {
         if (this.currentLodType != currentLodType) {
             this.currentLodType = currentLodType;
-            notifyChanged();
+            notifyChanged(StateType.LOD);
         }
     }
 
@@ -71,7 +58,7 @@ public class AppState {
     public void setCurrentHeatMapType(HeatMapType currentHeatMapType) {
         if (this.currentHeatMapType != currentHeatMapType) {
             this.currentHeatMapType = currentHeatMapType;
-            notifyChanged();
+            notifyChanged(StateType.HEATMAP);
         }
     }
 
@@ -80,6 +67,24 @@ public class AppState {
     }
 
     public void setSpawnType(SpawnType spawnType) {
-        this.spawnType = spawnType;
+        if (this.spawnType != spawnType) {
+            this.spawnType = spawnType;
+            notifyChanged(StateType.SPAWN);
+        }
+    }
+
+    public boolean isSimActive() {
+        return simActive;
+    }
+
+    public void setSimActive(boolean simActive) {
+        if (this.simActive != simActive) {
+            this.simActive = simActive;
+            notifyChanged(StateType.SIM);
+        }
+    }
+
+    public Camera getCamera() {
+        return camera;
     }
 }

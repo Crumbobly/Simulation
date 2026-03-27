@@ -1,6 +1,7 @@
 package ru.lab.app.ui.gameMap.layout;
 
 import ru.lab.app.visual.Camera;
+import ru.lab.app.visual.models.DebugModel;
 import ru.lab.config.Config;
 
 import javax.swing.JPanel;
@@ -8,25 +9,18 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.util.function.Supplier;
 
-public class DebugLayout extends JPanel {
+public class DebugLayout extends MapLayout {
 
-    private int mouseX, mouseY;
     private final Camera camera;
+    private final Supplier<Integer> mouseXProvider;
+    private final Supplier<Integer> mouseYProvider;
 
-    public DebugLayout(Camera camera) {
+    public DebugLayout(Camera camera, Supplier<Integer> mouseXProvider, Supplier<Integer> mouseYProvider) {
         this.camera = camera;
-
-        setOpaque(false);
-        setBackground(new Color(0, 0, 0, 0));
-        setAlignmentX(0f);
-        setAlignmentY(0f);
-    }
-
-    public void setMousePosition(int x, int y) {
-        this.mouseX = x;
-        this.mouseY = y;
-        repaint();
+        this.mouseXProvider = mouseXProvider;
+        this.mouseYProvider = mouseYProvider;
     }
 
     @Override
@@ -34,30 +28,14 @@ public class DebugLayout extends JPanel {
         super.paintComponent(g);
         final Graphics2D g2d = (Graphics2D) g;
 
-        render(
-                g2d,
-                camera.isZoomedIn(),
-                (int) camera.screenToWorldX(Config.MAP_WIDTH / 2),
-                (int) camera.screenToWorldY(Config.MAP_HEIGHT / 2),
-                (int) camera.screenToWorldX(mouseX),
-                (int) camera.screenToWorldY(mouseY)
-        );
+        final DebugModel model = DebugModel.build(camera, mouseXProvider.get(), mouseYProvider.get());
 
-    }
-
-    public void render(Graphics2D g2d,
-                       boolean isZoomedIn,
-                       int cameraCenterX,
-                       int cameraCenterY,
-                       int mouseX,
-                       int mouseY
-    ) {
         g2d.setColor(Color.WHITE);
         g2d.setFont(new Font("Arial", Font.BOLD, 16));
-        g2d.drawString("Zoom: " + (isZoomedIn ? "IN (приближено)" : "OUT (вся карта)"), 10, 25);
+        g2d.drawString("Zoom: " + (model.isZoomedIn() ? "IN (приближено)" : "OUT (вся карта)"), 10, 25);
         g2d.drawString("WASD: Движение | ЛКМ: Перетаскивание | SPACE: Zoom", 10, 45);
-        g2d.drawString("Центр камеры: (" + cameraCenterX + ", " + cameraCenterY + ")", 10, 65);
-        g2d.drawString("Мышь: (" + mouseX + ", " + mouseY + ")", 10, 85);
+        g2d.drawString("Центр камеры: (" + model.getCameraCenterX() + ", " + model.getCameraCenterY() + ")", 10, 65);
+        g2d.drawString("Мышь: (" + model.getMouseX() + ", " + model.getMouseY() + ")", 10, 85);
         g2d.setColor(Color.RED);
     }
 

@@ -34,7 +34,7 @@ public class WorldMapBuilder {
         double spreadX = Config.WORLD_WIDTH / 6.0;
         double spreadY = Config.WORLD_HEIGHT / 6.0;
 
-        for (int i = 0; i < 10000; i++) {
+        for (int i = 0; i < 1000; i++) {
 
             int x = (int) (centerX + random.nextGaussian() * spreadX);
             int y = (int) (centerY + random.nextGaussian() * spreadY);

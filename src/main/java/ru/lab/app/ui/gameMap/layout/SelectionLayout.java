@@ -2,8 +2,10 @@ package ru.lab.app.ui.gameMap.layout;
 
 import ru.lab.app.state.AppState;
 import ru.lab.app.state.InteractionMode;
+import ru.lab.app.state.StateType;
 import ru.lab.app.visual.Camera;
 import ru.lab.config.Config;
+import ru.lab.game.GameContext;
 
 import javax.swing.JPanel;
 import java.awt.Color;
@@ -11,8 +13,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.util.function.Supplier;
 
-public class SelectionLayout extends JPanel{
-
+public class SelectionLayout extends MapLayout{
 
     private final AppState appState;
     private final Supplier<Integer> mouseXProvider;
@@ -25,10 +26,11 @@ public class SelectionLayout extends JPanel{
         this.mouseXProvider = mouseXProvider;
         this.mouseYProvider = mouseYProvider;
 
-        setOpaque(false);
-        setBackground(new Color(0, 0, 0, 0));
-        setAlignmentX(0f);
-        setAlignmentY(0f);
+        appState.addChangeListener(change -> {
+            if (change == StateType.INTERACTION) {
+                repaint();
+            }
+        });
     }
 
     @Override
@@ -39,8 +41,6 @@ public class SelectionLayout extends JPanel{
     }
 
     public void render(Graphics2D g2d, Camera camera) {
-//        System.out.println("selected render");
-
         drawSelected(g2d, camera, mouseXProvider.get(), mouseYProvider.get(), appState.getCurrentInteractionMode());
         drawSight(g2d, camera);
     }

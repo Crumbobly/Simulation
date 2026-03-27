@@ -20,7 +20,6 @@ public class WorldLayout extends JPanel {
 
     @Override
     public void paintComponent(Graphics g) {
-//        System.out.println("World layout paintComponent");
         super.paintComponent(g);
         final Graphics2D g2d = (Graphics2D) g;
 

@@ -1,7 +1,8 @@
-package ru.lab.app.ui.toolBox;
+package ru.lab.app.ui.popup;
 
 import ru.algo.spatial.dto.PositionComponent;
 import ru.lab.app.state.AppState;
+import ru.lab.game.GameContext;
 import ru.lab.game.entity.Entity;
 
 import javax.swing.BorderFactory;
@@ -16,18 +17,22 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.util.Calendar;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.function.Consumer;
 
 public class EntitySelectorPanel extends JPanel {
 
     private final JPanel contentPanel;
     private JButton closeBtn;
-    private final AppState appState;
+
+    private final Consumer<Entity> delFunc;
     private Runnable onClose;
 
-    public EntitySelectorPanel(List<Entity> entities, PositionComponent position, AppState appState) {
+    public EntitySelectorPanel(List<Entity> entities, PositionComponent position, Consumer<Entity> delFunc) {
         this.contentPanel = new JPanel();
-        this.appState = appState;
+        this.delFunc = delFunc;
         setup(entities, position);
     }
 
@@ -80,26 +85,22 @@ public class EntitySelectorPanel extends JPanel {
         row.setMaximumSize(new Dimension(230, 35));
 
         // Название сущности
-        JLabel name = new JLabel("🔹 " + entity.getClass().getSimpleName());
+        JLabel name = new JLabel(entity.getClass().getSimpleName());
         name.setForeground(Color.WHITE);
-        name.setFont(new Font("SansSerif", Font.PLAIN, 12));
 
         // Кнопка удаления
-        JButton deleteBtn = new JButton("🗑");
+        JButton deleteBtn = new JButton();
         deleteBtn.setToolTipText("Удалить эту сущность");
-        deleteBtn.setFont(new Font("SansSerif", Font.PLAIN, 14));
         deleteBtn.setBackground(new Color(200, 60, 60));
         deleteBtn.setForeground(Color.WHITE);
         deleteBtn.setFocusPainted(false);
         deleteBtn.setPreferredSize(new Dimension(35, 25));
         deleteBtn.setMaximumSize(new Dimension(35, 25));
 
-        // Сохраняем ссылку на сущность через клиентские свойства
         deleteBtn.putClientProperty("entity", entity);
         deleteBtn.addActionListener(e -> {
             Entity toDelete = (Entity) deleteBtn.getClientProperty("entity");
-            // 👇 Здесь будет вызов удаления из WorldMap
-            appState.getGameContext().getWorldMap().remove(entity);
+            delFunc.accept(toDelete);
             System.out.println("Удалить: " + toDelete.getClass().getSimpleName());
             onClose.run();
 

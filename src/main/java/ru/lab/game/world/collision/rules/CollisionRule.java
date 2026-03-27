@@ -1,4 +1,4 @@
-package ru.lab.game.world.collision;
+package ru.lab.game.world.collision.rules;
 
 
 import ru.lab.game.entity.Entity;

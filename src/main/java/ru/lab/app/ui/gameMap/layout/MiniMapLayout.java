@@ -3,6 +3,7 @@ package ru.lab.app.ui.gameMap.layout;
 import ru.lab.config.Config;
 import ru.lab.app.state.AppState;
 import ru.lab.app.visual.Camera;
+import ru.lab.game.GameContext;
 
 import javax.swing.JPanel;
 import java.awt.BasicStroke;
@@ -11,20 +12,19 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 
-// TODO("Перерисовка автоматически, попробовать через обсервер")
+
 public class MiniMapLayout extends JPanel {
 
-    private final AppState appState;
+    private final Camera camera;
 
-    public MiniMapLayout(AppState appState, double div) {
-        this.appState = appState;
+    public MiniMapLayout(Camera camera, double div) {
+        this.camera = camera;
         setPreferredSize(
                 new Dimension(
                         (int) (Config.WORLD_WIDTH / div),
                         (int) (Config.WORLD_HEIGHT / div)
                 )
         );
-
     }
 
     @Override
@@ -44,8 +44,6 @@ public class MiniMapLayout extends JPanel {
     }
 
     private void drawCameraView(Graphics2D g2d) {
-
-        Camera camera = appState.getCamera();
 
         // масштаб миникарты относительно мира
         double scaleX = getWidth() / (double) Config.WORLD_WIDTH;

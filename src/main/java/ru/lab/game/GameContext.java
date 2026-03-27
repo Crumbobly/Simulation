@@ -10,22 +10,10 @@ public class GameContext {
 
     private final WorldMap worldMap;
     private final Simulation simulation;
-    private boolean running = false;
 
-    public GameContext(WorldMap worldMap, Simulation simulation, Camera camera) {
-        this.worldMap = worldMap;
-        this.simulation = simulation;
-    }
-
-    public static GameContext createDefault() {
-        WorldMap worldMap = WorldMapBuilder.build();
-        Simulation simulation = new Simulation(worldMap);
-        Camera camera = new Camera(Config.MAP_WIDTH, Config.MAP_HEIGHT);
-        return new GameContext(worldMap, simulation, camera);
-    }
-
-    public void changeRunning(){
-        running = !running;
+    public GameContext() {
+        this.worldMap = WorldMapBuilder.build();
+        this.simulation = new Simulation(worldMap);
     }
 
     public WorldMap getWorldMap() {
@@ -36,11 +24,4 @@ public class GameContext {
         return simulation;
     }
 
-    public boolean isRunning() {
-        return running;
-    }
-
-    public void setRunning(boolean running) {
-        this.running = running;
-    }
 }
